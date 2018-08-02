@@ -4,19 +4,19 @@
 
 <div class="container-fluid">
     <ul class="nav nav-tabs p-b">
-        <?php foreach ($statuses as $statusKey => $statusValue): ?>
-            <li class="<?php if((string)$statusKey === $status): ?> active <?php endif; ?>">
+        <?php foreach ($allStatuses as $statusKey => $statusValue): ?>
+            <li class="<?php if((string)$statusKey === $currentStatus): ?> active <?php endif; ?>">
                 <a href="<?= Url::to(['site/index', 'status' => $statusKey]); ?>"><?= $statusValue ?></a>
             </li>
         <?php endforeach; ?>
         <li class="pull-right custom-search">
-            <form class="form-inline" action="<?= Url::to(['site/index', 'status' => $status]); ?>" method="get">
+            <form class="form-inline" action="<?= Url::to(['site/index', 'status' => $currentStatus]); ?>" method="get">
                 <div class="input-group">
-                    <input type="text" name="search" class="form-control" value="<?= $search ?>" placeholder="Search orders">
+                    <input type="text" name="search" class="form-control" value="<?= $currentSearch ?>" placeholder="Search orders">
                     <span class="input-group-btn search-select-wrap">
                     <select class="form-control search-select" name="searchType">
-                    <?php foreach ($searchTypes as $searchTypeKey => $searchTypeValue): ?>
-                      <option value="<?= $searchTypeKey ?>" <?php if($searchTypeKey == $searchType): ?> selected <?php endif; ?>><?= $searchTypeValue ?></option>
+                    <?php foreach ($allSearchTypes as $searchTypeKey => $searchTypeValue): ?>
+                      <option value="<?= $searchTypeKey ?>" <?php if($searchTypeKey == $currentSearchType): ?> selected <?php endif; ?>><?= $searchTypeValue ?></option>
                     <?php endforeach; ?>
                     </select>
                     <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>
@@ -40,8 +40,8 @@
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
                         <?php foreach ($services as $service): ?>
-                            <li class="<?php if($service_id == $service['service_id']): ?> active <?php endif; ?>">
-                                <a href="<?= Url::to(['site/index', 'status' => $status, 'mode' => $mode, 'service_id' =>$service['service_id'], 'search' => $search, 'searchType' => $searchType]); ?>">
+                            <li class="<?php if($currentServiceId == $service['serviceId']): ?> active <?php endif; ?>">
+                                <a href="<?= Url::to(['site/index', 'status' => $currentStatus, 'mode' => $currentMode, 'serviceId' => $service['serviceId'], 'search' => $currentSearch, 'searchType' => $currentSearchType]); ?>">
                                     <span class="label-id"><?= $service['qty'] ?></span>  <?= $service['service']->name ?>
                                 </a>
                             </li>
@@ -57,9 +57,9 @@
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-                        <?php foreach ($modes as $modeKey => $modeValue): ?>
-                            <li class="<?php if((string)$modeKey === $mode): ?> active <?php endif; ?>">
-                                <a href="<?= Url::to(['site/index', 'status' => $status, 'mode' => $modeKey, 'service_id' =>$service_id, 'search' => $search, 'searchType' => $searchType, 'search' => $search, 'searchType' => $searchType]); ?>"><?= $modeValue ?></a>
+                        <?php foreach ($allModes as $modeKey => $modeValue): ?>
+                            <li class="<?php if((string)$modeKey === $currentMode): ?> active <?php endif; ?>">
+                                <a href="<?= Url::to(['site/index', 'status' => $currentStatus, 'mode' => $modeKey, 'serviceId' =>$serviceId, 'search' => $currentSearch, 'searchType' => $currentSearchType]); ?>"><?= $modeValue ?></a>
                             </li>
                         <?php endforeach; ?>
                     </ul>
@@ -76,11 +76,11 @@
             <td class="link"><?= strtr($order->link, ['https://example.com' => ''])  ?></td>
             <td><?= $order->quantity ?></td>
             <td class="service">
-                <span class="label-id"><?= $services[array_search($order->service->id, array_column($services, 'service_id'))]['qty'] ?></span>
+                <span class="label-id"><?= $services[array_search($order->service->id, array_column($services, 'serviceId'))]['qty'] ?></span>
                 <?= $order->service->name ?>
             </td>
-            <td><?= $statuses[$order->status]; ?></td>
-            <td><?= $modes[$order->mode]; ?></td>
+            <td><?= $allStatuses[$order->status]; ?></td>
+            <td><?= $allModes[$order->mode]; ?></td>
             <td><span class="nowrap"><?= date('Y-m-d', $order->created_at) ?></span><span class="nowrap"><?= date('H:i:s', $order->created_at) ?></span></td>
         </tr>
         <?php endforeach; ?>
@@ -91,11 +91,11 @@
 
             <nav>
                 <ul class="pagination">
-                    <li class="<?php if($pagination->page == 0) : ?> disabled <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $status, 'mode' => $mode, 'service_id' =>$service_id, 'search' => $search, 'searchType' => $searchType]); ?>&page=<?= $pagination->page ?>" aria-label="Previous">&laquo;</a></li>
+                    <li class="<?php if($pagination->page == 0) : ?> disabled <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $currentStatus, 'mode' => $currentMode, 'serviceId' =>$currentServiceId, 'search' => $currentSearch, 'searchType' => $currentSearchType, 'page' => $pagination->page]); ?>" aria-label="Previous">&laquo;</a></li>
                     <?php for($p=1; $p <= $pagination->pageCount; $p++) : ?>
-                        <li class="<?php if($pagination->page+1 == $p): ?> active <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $status, 'mode' => $mode, 'service_id' =>$service_id, 'search' => $search, 'searchType' => $searchType]); ?>&page=<?= $p ?>"><?= $p ?></a></li>
+                        <li class="<?php if($pagination->page+1 == $p): ?> active <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $currentStatus, 'mode' => $currentMode, 'serviceId' =>$currentServiceId, 'search' => $currentSearch, 'searchType' => $currentSearchType, 'page' => $p]); ?>"><?= $p ?></a></li>
                     <?php endfor; ?>
-                    <li class="<?php if($pagination->page+1 == $pagination->pageCount) : ?> disabled <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $status, 'mode' => $mode, 'service_id' =>$service_id, 'search' => $search, 'searchType' => $searchType]); ?>&page=<?= $pagination->page+2 ?>" aria-label="Next">&raquo;</a></li>
+                    <li class="<?php if($pagination->page+1 == $pagination->pageCount) : ?> disabled <?php endif; ?>"><a href="<?= Url::to(['site/index', 'status' => $currentStatus, 'mode' => $currentMode, 'serviceId' =>$currentServiceId, 'search' => $currentSearch, 'searchType' => $currentSearchType, 'page' => $pagination->page+2]); ?>" aria-label="Next">&raquo;</a></li>
                 </ul>
             </nav>
 

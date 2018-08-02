@@ -1,18 +1,3 @@
-<?php
-
-/* @var $this \yii\web\View */
-/* @var $content string */
-
-use app\widgets\Alert;
-use yii\helpers\Html;
-use yii\bootstrap\Nav;
-use yii\bootstrap\NavBar;
-use yii\widgets\Breadcrumbs;
-use app\assets\AppAsset;
-
-AppAsset::register($this);
-?>
-<?php $this->beginPage() ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -61,4 +46,3 @@ AppAsset::register($this);
 <script src="/js/bootstrap.min.js"></script>
 </body>
 <html>
-<?php $this->endPage() ?>
