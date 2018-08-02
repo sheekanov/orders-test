@@ -41,6 +41,7 @@ class SiteController extends Controller
             ->from('services')
             ->leftJoin(['orders' => $query], 'orders.service_id =services.id')
             ->groupBy('services.id')
+            ->having('COUNT(orders.id) > 0')
             ->all();
 
         foreach ($services as $serviceKey => $serviceValue) {
