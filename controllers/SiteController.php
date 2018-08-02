@@ -2,127 +2,77 @@
 
 namespace app\controllers;
 
-use Yii;
-use yii\filters\AccessControl;
+use app\models\Order;
+use app\models\Service;
+use yii\data\Pagination;
 use yii\web\Controller;
-use yii\web\Response;
-use yii\filters\VerbFilter;
-use app\models\LoginForm;
-use app\models\ContactForm;
+
 
 class SiteController extends Controller
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function behaviors()
+    public function actionIndex($status = 'all', $service_id = 'all', $mode = 'all', $search = null, $searchType=null)
     {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
+        $query = Order::find();
 
-    /**
-     * {@inheritdoc}
-     */
-    public function actions()
-    {
-        return [
-            'error' => [
-                'class' => 'yii\web\ErrorAction',
-            ],
-            'captcha' => [
-                'class' => 'yii\captcha\CaptchaAction',
-                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
-        ];
-    }
-
-    /**
-     * Displays homepage.
-     *
-     * @return string
-     */
-    public function actionIndex()
-    {
-        return $this->render('index');
-    }
-
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
-    public function actionLogin()
-    {
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
+        if($status != 'all') {
+            $query->andwhere(['status' => $status]);
         }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
+        if($mode != 'all') {
+            $query->andwhere(['mode' => $mode]);
         }
 
-        $model->password = '';
-        return $this->render('login', [
-            'model' => $model,
+        if(!is_null($search) && $search != '') {
+            switch ($searchType) {
+                case 1:
+                    $query->andwhere(['=', 'id', $search]);
+                    break;
+                case 2:
+                    $query->andwhere(['LIKE', 'link', $search]);
+                    break;
+                case 3:
+                    $query->andwhere(['LIKE', 'user', $search]);
+                    break;
+            }
+        }
+
+        $services = (new \yii\db\Query())
+            ->select(['services.id as service_id', "COUNT(orders.id) AS qty"])
+            ->from('services')
+            ->leftJoin(['orders' => $query], 'orders.service_id =services.id')
+            ->groupBy('services.id')
+            ->all();
+
+        foreach ($services as $serviceKey => $serviceValue) {
+            $services[$serviceKey]['service'] = Service::findOne($services[$serviceKey]['service_id']);
+        }
+
+        $serviceAllMember = new Service();
+        $serviceAllMember->name = 'All';
+        array_unshift($services, array('service_id' => 'all', 'service' => $serviceAllMember, 'qty' => $query->count()));
+
+        if($service_id != 'all') {
+            $query->andwhere(['service_id' => $service_id]);
+        }
+
+        $pagination = new Pagination(['pageSize' => 100, 'totalCount' => $query->count()]);
+
+        $orders = $query->orderBy('id DESC')
+            ->offset($pagination->offset)
+            ->limit($pagination->limit)->all();
+
+        return $this->render('orders', [
+            'orders' => $orders,
+            'services' => $services,
+            'pagination' => $pagination,
+            'statuses' => ['all' => 'All orders', '0' => 'Pending', '1' => 'In Progress', '2' => 'Completed', '3' => 'Canceled', '4' => 'Error'],
+            'modes' => ['all' => 'All', '0' => 'Manual', '1' => 'Auto'],
+            'searchTypes' => ['1' => 'Order ID', '2' => 'Link', '3' => 'Username'],
+            'status' => $status,
+            'mode' => $mode,
+            'service_id' => $service_id,
+            'search' => $search,
+            'searchType' => $searchType
         ]);
-    }
-
-    /**
-     * Logout action.
-     *
-     * @return Response
-     */
-    public function actionLogout()
-    {
-        Yii::$app->user->logout();
-
-        return $this->goHome();
-    }
-
-    /**
-     * Displays contact page.
-     *
-     * @return Response|string
-     */
-    public function actionContact()
-    {
-        $model = new ContactForm();
-        if ($model->load(Yii::$app->request->post()) && $model->contact(Yii::$app->params['adminEmail'])) {
-            Yii::$app->session->setFlash('contactFormSubmitted');
-
-            return $this->refresh();
-        }
-        return $this->render('contact', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return string
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
     }
 }
